@@ -22,11 +22,19 @@ export const SoundWaveViewer: React.FC<SoundWaveViewerProps> = ({ isRunning }) =
   const [waveCount, setWaveCount] = useState(0);
 
   useEffect(() => {
-    if (!canvasRef.current || p5Ref.current) return;
+    if (!canvasRef.current) return;
+    
+    // Clean up existing p5 instance
+    if (p5Ref.current) {
+      p5Ref.current.remove();
+      p5Ref.current = null;
+    }
 
     const sketch = (p: p5) => {
       let time = 0;
       let lastWaveCount = 0;
+      
+      console.log('Sound wave sketch created/updated with speed:', speed[0]);
 
       p.setup = () => {
         if (!canvasRef.current) return;
@@ -76,11 +84,22 @@ export const SoundWaveViewer: React.FC<SoundWaveViewerProps> = ({ isRunning }) =
         p.line(0, p.height / 2, p.width, p.height / 2);
         p.pop();
 
-        // Calculate wave parameters for smooth animation
-        const freq = frequency[0] / 100; // Scale frequency for visual appeal
-        const amp = amplitude[0];
-        const animationSpeed = speed[0]; // Direct speed multiplier
-        const wavelengthPixels = p.width / (freq * 2); // Visual wavelength in pixels
+        // Calculate wave parameters - using current state values
+        const currentFreq = frequency[0] / 100; // Scale frequency for visual appeal
+        const currentAmp = amplitude[0];
+        const currentAnimationSpeed = speed[0] * 3; // Increased sensitivity
+        const wavelengthPixels = p.width / (currentFreq * 2); // Visual wavelength in pixels
+        
+        // Debug log every 60 frames
+        if (p.frameCount % 60 === 0) {
+          console.log('Wave params:', { 
+            freq: currentFreq, 
+            amp: currentAmp, 
+            animationSpeed: currentAnimationSpeed, 
+            speedState: speed[0], 
+            time 
+          });
+        }
         
         // Draw the main wave with glow effect
         p.push();
@@ -93,9 +112,9 @@ export const SoundWaveViewer: React.FC<SoundWaveViewerProps> = ({ isRunning }) =
           
           p.beginShape();
           for (let x = 0; x <= p.width; x += 1) {
-            // Smooth sine wave calculation with proper speed control
-            const phase = (2 * Math.PI * x / wavelengthPixels) - (time * animationSpeed * 0.05);
-            const y = p.height / 2 + amp * Math.sin(phase);
+            // Smooth sine wave calculation with sensitive speed control
+            const phase = (2 * Math.PI * x / wavelengthPixels) - (time * currentAnimationSpeed * 0.15);
+            const y = p.height / 2 + currentAmp * Math.sin(phase);
             p.vertex(x, y);
           }
           p.endShape();
@@ -108,8 +127,8 @@ export const SoundWaveViewer: React.FC<SoundWaveViewerProps> = ({ isRunning }) =
         
         p.beginShape();
         for (let x = 0; x <= p.width; x += 1) {
-          const phase = (2 * Math.PI * x / wavelengthPixels) - (time * animationSpeed * 0.05);
-          const y = p.height / 2 + amp * Math.sin(phase);
+          const phase = (2 * Math.PI * x / wavelengthPixels) - (time * currentAnimationSpeed * 0.15);
+          const y = p.height / 2 + currentAmp * Math.sin(phase);
           p.vertex(x, y);
         }
         p.endShape();
@@ -121,7 +140,7 @@ export const SoundWaveViewer: React.FC<SoundWaveViewerProps> = ({ isRunning }) =
           time += 1;
           
           // Count complete waves based on time and animation speed
-          const currentWaveCount = Math.floor((time * animationSpeed * 0.05) / (2 * Math.PI));
+          const currentWaveCount = Math.floor((time * currentAnimationSpeed * 0.15) / (2 * Math.PI));
           if (currentWaveCount > lastWaveCount) {
             setWaveCount(currentWaveCount);
             lastWaveCount = currentWaveCount;
