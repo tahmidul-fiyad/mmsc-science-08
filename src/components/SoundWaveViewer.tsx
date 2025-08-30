@@ -47,19 +47,19 @@ export const SoundWaveViewer: React.FC<SoundWaveViewerProps> = ({ isRunning }) =
         // Draw grid lines
         p.push();
         if (isDarkMode) {
-          p.stroke(30, 50, 80, 150); // Dark grid lines
+          p.stroke(30, 50, 80, 100); // Dark grid lines
         } else {
-          p.stroke(200, 220, 240, 150); // Light grid lines
+          p.stroke(200, 220, 240, 100); // Light grid lines
         }
         p.strokeWeight(0.5);
         
         // Vertical grid lines
-        for (let x = 0; x <= p.width; x += 20) {
+        for (let x = 0; x <= p.width; x += 40) {
           p.line(x, 0, x, p.height);
         }
         
         // Horizontal grid lines
-        for (let y = 0; y <= p.height; y += 20) {
+        for (let y = 0; y <= p.height; y += 40) {
           p.line(0, y, p.width, y);
         }
         p.pop();
@@ -67,44 +67,60 @@ export const SoundWaveViewer: React.FC<SoundWaveViewerProps> = ({ isRunning }) =
         // Center line
         p.push();
         if (isDarkMode) {
-          p.stroke(60, 80, 120);
+          p.stroke(60, 80, 120, 150);
         } else {
-          p.stroke(150, 170, 200);
+          p.stroke(150, 170, 200, 150);
         }
         p.strokeWeight(1);
         p.line(0, p.height / 2, p.width, p.height / 2);
         p.pop();
 
-        // Calculate wave parameters
-        const freq = frequency[0];
+        // Calculate wave parameters for smooth animation
+        const freq = frequency[0] / 100; // Scale frequency for visual appeal
         const amp = amplitude[0];
-        const waveSpeed = speed[0] / 10; // Scale for visualization
-        const angularFreq = 2 * Math.PI * freq / 100; // Adjust for visual frequency
+        const waveSpeed = speed[0] / 50; // Scale speed for smooth movement
+        const wavelengthPixels = p.width / (freq * 2); // Visual wavelength in pixels
         
-        // Draw the wave
+        // Draw the main wave with glow effect
         p.push();
-        p.stroke(0, 255, 255); // Neon blue
-        p.strokeWeight(3);
+        
+        // Create glow effect with multiple layers
+        for (let glow = 3; glow >= 1; glow--) {
+          p.stroke(0, 255, 255, 255 / (glow * 2)); // Neon cyan with fading alpha
+          p.strokeWeight(3 + glow * 2);
+          p.noFill();
+          
+          p.beginShape();
+          for (let x = 0; x <= p.width; x += 1) {
+            // Smooth sine wave calculation
+            const phase = (2 * Math.PI * x / wavelengthPixels) - (time * waveSpeed * 0.02);
+            const y = p.height / 2 + amp * Math.sin(phase);
+            p.vertex(x, y);
+          }
+          p.endShape();
+        }
+        
+        // Main bright wave line
+        p.stroke(0, 255, 255); // Pure neon cyan
+        p.strokeWeight(2);
         p.noFill();
         
-        // Add glow effect
-        p.drawingContext.shadowColor = 'rgba(0, 255, 255, 0.8)';
-        p.drawingContext.shadowBlur = 10;
-        
         p.beginShape();
-        for (let x = 0; x <= p.width; x += 2) {
-          const y = p.height / 2 + amp * Math.sin(angularFreq * x - time * waveSpeed);
+        for (let x = 0; x <= p.width; x += 1) {
+          const phase = (2 * Math.PI * x / wavelengthPixels) - (time * waveSpeed * 0.02);
+          const y = p.height / 2 + amp * Math.sin(phase);
           p.vertex(x, y);
         }
         p.endShape();
+        
         p.pop();
 
         // Update time and wave count if running
         if (isRunning) {
-          time += 0.1;
+          time += 1;
           
-          // Count complete waves (every 2π phase)
-          const currentWaveCount = Math.floor(time * waveSpeed / (2 * Math.PI));
+          // Count complete waves based on time and frequency
+          const currentWaveCount = Math.floor((time * waveSpeed * 0.02) / (2 * Math.PI));
           if (currentWaveCount > lastWaveCount) {
             setWaveCount(currentWaveCount);
             lastWaveCount = currentWaveCount;
