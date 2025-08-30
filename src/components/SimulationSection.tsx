@@ -10,6 +10,7 @@ import Matter from 'matter-js';
 import { MoleculeViewer } from './MoleculeViewer';
 import { AtomViewer } from './AtomViewer';
 import { DimensionsViewer } from './DimensionsViewer';
+import { SoundWaveViewer } from './SoundWaveViewer';
 
 
 export const SimulationSection = () => {
@@ -338,6 +339,12 @@ export const SimulationSection = () => {
       description: 'Explore 1D, 2D, 3D, and 4D geometric spaces',
       icon: Box,
       active: activePhysicsSim === 1
+    },
+    {
+      name: 'Sound Waves',
+      description: 'Wave physics, frequency, wavelength & amplitude',
+      icon: Waves,
+      active: activePhysicsSim === 2
     }
   ];
 
@@ -433,7 +440,8 @@ export const SimulationSection = () => {
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xl font-semibold">
                       {activePhysicsSim === 0 ? "Newton's Cradle Simulator" : 
-                       activePhysicsSim === 1 ? "Dimensions Explorer" : "Sound Waves Simulator"}
+                       activePhysicsSim === 1 ? "Dimensions Explorer" : 
+                       activePhysicsSim === 2 ? "Sound Waves Simulator" : "Physics Simulator"}
                     </h3>
                     <div className="flex space-x-2">
                       <Button
@@ -473,9 +481,12 @@ export const SimulationSection = () => {
                           )}
                         </div>
                       )}
-                      {activePhysicsSim === 1 && (
-                        <DimensionsViewer isRunning={physicsRunning} />
-                      )}
+                       {activePhysicsSim === 1 && (
+                         <DimensionsViewer isRunning={physicsRunning} />
+                       )}
+                       {activePhysicsSim === 2 && (
+                         <SoundWaveViewer isRunning={physicsRunning} />
+                       )}
                    </div>
 
                   {/* Controls */}
