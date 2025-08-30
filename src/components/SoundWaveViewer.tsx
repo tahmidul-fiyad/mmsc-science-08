@@ -13,10 +13,11 @@ export const SoundWaveViewer: React.FC<SoundWaveViewerProps> = ({ isRunning }) =
   const p5Ref = useRef<p5 | null>(null);
   const [frequency, setFrequency] = useState([440]); // Hz
   const [amplitude, setAmplitude] = useState([50]); // pixels
-  const [speed, setSpeed] = useState([340]); // m/s (speed of sound)
+  const [speed, setSpeed] = useState([1]); // Animation speed multiplier (1 = normal)
   
-  // Calculated values
-  const wavelength = speed[0] / frequency[0]; // lambda = v/f
+  // Calculated values (using real physics for display)
+  const actualSpeed = 340; // Real speed of sound in m/s
+  const wavelength = actualSpeed / frequency[0]; // lambda = v/f
   const period = 1 / frequency[0]; // T = 1/f
   const [waveCount, setWaveCount] = useState(0);
 
@@ -78,7 +79,7 @@ export const SoundWaveViewer: React.FC<SoundWaveViewerProps> = ({ isRunning }) =
         // Calculate wave parameters for smooth animation
         const freq = frequency[0] / 100; // Scale frequency for visual appeal
         const amp = amplitude[0];
-        const waveSpeed = speed[0] / 50; // Scale speed for smooth movement
+        const animationSpeed = speed[0]; // Direct speed multiplier
         const wavelengthPixels = p.width / (freq * 2); // Visual wavelength in pixels
         
         // Draw the main wave with glow effect
@@ -92,8 +93,8 @@ export const SoundWaveViewer: React.FC<SoundWaveViewerProps> = ({ isRunning }) =
           
           p.beginShape();
           for (let x = 0; x <= p.width; x += 1) {
-            // Smooth sine wave calculation
-            const phase = (2 * Math.PI * x / wavelengthPixels) - (time * waveSpeed * 0.02);
+            // Smooth sine wave calculation with proper speed control
+            const phase = (2 * Math.PI * x / wavelengthPixels) - (time * animationSpeed * 0.05);
             const y = p.height / 2 + amp * Math.sin(phase);
             p.vertex(x, y);
           }
@@ -107,7 +108,7 @@ export const SoundWaveViewer: React.FC<SoundWaveViewerProps> = ({ isRunning }) =
         
         p.beginShape();
         for (let x = 0; x <= p.width; x += 1) {
-          const phase = (2 * Math.PI * x / wavelengthPixels) - (time * waveSpeed * 0.02);
+          const phase = (2 * Math.PI * x / wavelengthPixels) - (time * animationSpeed * 0.05);
           const y = p.height / 2 + amp * Math.sin(phase);
           p.vertex(x, y);
         }
@@ -119,8 +120,8 @@ export const SoundWaveViewer: React.FC<SoundWaveViewerProps> = ({ isRunning }) =
         if (isRunning) {
           time += 1;
           
-          // Count complete waves based on time and frequency
-          const currentWaveCount = Math.floor((time * waveSpeed * 0.02) / (2 * Math.PI));
+          // Count complete waves based on time and animation speed
+          const currentWaveCount = Math.floor((time * animationSpeed * 0.05) / (2 * Math.PI));
           if (currentWaveCount > lastWaveCount) {
             setWaveCount(currentWaveCount);
             lastWaveCount = currentWaveCount;
@@ -157,7 +158,7 @@ export const SoundWaveViewer: React.FC<SoundWaveViewerProps> = ({ isRunning }) =
           <div className="space-y-1 text-xs">
             <div>f = {frequency[0]} Hz</div>
             <div>λ = {wavelength.toFixed(2)} m</div>
-            <div>v = {speed[0]} m/s</div>
+            <div>v = {actualSpeed} m/s</div>
             <div>T = {period.toFixed(4)} s</div>
             <div>Waves: {waveCount}</div>
           </div>
@@ -213,21 +214,21 @@ export const SoundWaveViewer: React.FC<SoundWaveViewerProps> = ({ isRunning }) =
         <Card className="p-4 bg-gradient-card border-glass-border">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium">Speed (v)</label>
+              <label className="text-sm font-medium">Animation Speed</label>
               <Badge variant="outline" className="text-xs">
-                {speed[0]} m/s
+                {speed[0]}x
               </Badge>
             </div>
             <Slider
               value={speed}
               onValueChange={setSpeed}
-              max={500}
-              min={200}
-              step={10}
+              max={3}
+              min={0.1}
+              step={0.1}
               className="w-full"
             />
             <div className="text-xs text-muted-foreground">
-              Wave propagation speed through medium
+              Controls wave animation speed (visual only)
             </div>
           </div>
         </Card>
@@ -241,7 +242,8 @@ export const SoundWaveViewer: React.FC<SoundWaveViewerProps> = ({ isRunning }) =
           <li>• Wavelength (λ): Distance between wave crests (λ = v/f)</li>
           <li>• Amplitude: Maximum displacement from equilibrium</li>
           <li>• Period (T): Time for one complete oscillation (T = 1/f)</li>
-          <li>• Velocity (v): Speed of wave propagation through medium</li>
+          <li>• Velocity (v): Speed of wave propagation = 340 m/s (in air)</li>
+          <li>• Animation Speed: Visual playback speed multiplier</li>
           <li>• Wave equation: y = A·sin(2πf·t - 2πx/λ)</li>
         </ul>
       </Card>
